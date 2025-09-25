@@ -24,13 +24,17 @@ services:
   flink-jobmanager:
     image: flink:1.18.0-scala_2.12-java11
     container_name: flink-jobmanager
+    #entrypoint: ["/submit-jobs.sh"]
     ports:
       - "8081:8081" # Flink Web UI
     command: jobmanager
     environment:
-      - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: flink-jobmanager
     volumes:
       - ./flink-jobs/target/flink-jobs-1.0-SNAPSHOT.jar:/opt/flink/usrlib/myjob.jar
+      - ./flink-jobs/submit-jobs.sh:/submit-jobs.sh
     depends_on:
       - kafka
 
@@ -43,4 +47,7 @@ services:
     command: taskmanager
     scale: 1 # Can scale up if needed
     environment:
-      - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: flink-jobmanager
+        taskmanager.numberOfTaskSlots: 10

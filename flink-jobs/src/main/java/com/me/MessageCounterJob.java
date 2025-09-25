@@ -24,7 +24,7 @@ public class MessageCounterJob {
         KafkaSource<String> source = KafkaSource.<String>builder()
             .setBootstrapServers("kafka:29092")
             .setTopics("test-topic")
-            .setGroupId("consumer-flink")
+            .setGroupId("consumer-flink-count")
             .setStartingOffsets(OffsetsInitializer.earliest())
             .setValueOnlyDeserializer(new SimpleStringSchema())
             .build();
