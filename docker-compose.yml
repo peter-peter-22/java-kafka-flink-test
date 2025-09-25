@@ -1,0 +1,46 @@
+services:
+  kafka:
+    image: apache/kafka:4.1.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      # Listeners
+      KAFKA_LISTENERS: CONTROLLER://0.0.0.0:29093,INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT # Edit for production
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+
+      # Kraft
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+
+      # Cluster and performance
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1 # Required for single cluster
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+  flink-jobmanager:
+    image: flink:1.18.0-scala_2.12-java11
+    container_name: flink-jobmanager
+    ports:
+      - "8081:8081" # Flink Web UI
+    command: jobmanager
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
+    volumes:
+      - ./flink-jobs/target/flink-jobs-1.0-SNAPSHOT.jar:/opt/flink/usrlib/myjob.jar
+    depends_on:
+      - kafka
+
+  flink-taskmanager:
+    image: flink:1.18.0-scala_2.12-java11
+    container_name: flink-taskmanager
+    depends_on:
+      - flink-jobmanager
+      - kafka
+    command: taskmanager
+    scale: 1 # Can scale up if needed
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=flink-jobmanager
