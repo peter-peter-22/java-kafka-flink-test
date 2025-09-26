@@ -22,9 +22,12 @@ services:
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
 
   flink-jobmanager:
+    # Submit jobs
+    # flink run -c com.me.UppercaseJob /opt/flink/usrlib/myjob.jar
+    # flink run -c com.me.MessageCounterJob /opt/flink/usrlib/myjob.jar
     image: flink:1.18.0-scala_2.12-java11
     container_name: flink-jobmanager
-    #entrypoint: ["/submit-jobs.sh"]
+    entrypoint: ["/submit-jobs.sh"]
     ports:
       - "8081:8081" # Flink Web UI
     command: jobmanager
@@ -34,7 +37,8 @@ services:
         jobmanager.rpc.address: flink-jobmanager
     volumes:
       - ./flink-jobs/target/flink-jobs-1.0-SNAPSHOT.jar:/opt/flink/usrlib/myjob.jar
-      - ./flink-jobs/submit-jobs.sh:/submit-jobs.sh
+      - flink-checkpoints:/opt/flink/checkpoints
+      - flink-savepoints:/opt/flink/savepoints
     depends_on:
       - kafka
 
@@ -50,4 +54,8 @@ services:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: flink-jobmanager
-        taskmanager.numberOfTaskSlots: 10
+        taskmanager.numberOfTaskSlots: 32
+
+volumes:
+  flink-checkpoints:
+  flink-savepoints:
